@@ -1,4 +1,5 @@
-// Vercel serverless function, served automatically at /unique-code (filesystem routing).
+// Vercel serverless function. Filesystem routing serves it at /api/unique-code;
+// vercel.json rewrites /unique-code -> /api/unique-code so both paths work.
 // Returns the exact `code` payload from data/unique-code.json when a valid apiKey is supplied.
 // Self-contained: no rewrites, no cross-file requires except the JSON payload (which Vercel
 // bundles because it is a static require).
