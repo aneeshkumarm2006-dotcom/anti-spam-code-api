@@ -5,8 +5,6 @@
 // and also works on Vercel: api/index.js re-exports the `handler` below, which Vercel
 // invokes directly as a serverless function.
 
-const fs = require("fs");
-const path = require("path");
 const http = require("http");
 const { URL } = require("url");
 
@@ -17,13 +15,13 @@ const PORT = process.env.PORT || 3000;
 
 // --- Load the payload once at startup ---------------------------------------
 // data/unique-code.json is the verbatim source object { "code": "<...>" }.
-// We serve the exact value of `code`, unmodified.
-const DATA_FILE = path.join(__dirname, "data", "unique-code.json");
+// We serve the exact value of `code`, unmodified. Using require() (rather than fs) means
+// bundlers like Vercel's automatically include the JSON file in the serverless function.
 let UNIQUE_CODE = "";
 try {
-  UNIQUE_CODE = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")).code || "";
+  UNIQUE_CODE = require("./data/unique-code.json").code || "";
 } catch (err) {
-  console.error("Failed to load payload from", DATA_FILE, "-", err.message);
+  console.error("Failed to load payload -", err.message);
 }
 
 // --- Landing page HTML ------------------------------------------------------
