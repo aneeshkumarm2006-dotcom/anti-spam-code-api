@@ -4,12 +4,19 @@
 // Self-contained: no rewrites, no cross-file requires except the JSON payload (which Vercel
 // bundles because it is a static require).
 
+const fs = require("fs");
+const path = require("path");
+
 const DEFAULT_KEY = "f5b89048d6b98e39b4012611c1799589400b412c";
 const API_KEY = process.env.API_KEY || DEFAULT_KEY;
 
+// RAW_PAYLOAD: the file's exact bytes, served verbatim so the JSON response is
+// byte-for-byte identical to the source. UNIQUE_CODE: decoded value for html/raw.
+let RAW_PAYLOAD = Buffer.from('{"code":""}');
 let UNIQUE_CODE = "";
 try {
-  UNIQUE_CODE = require("../data/unique-code.json").code || "";
+  RAW_PAYLOAD = fs.readFileSync(path.join(__dirname, "..", "data", "unique-code.json"));
+  UNIQUE_CODE = JSON.parse(RAW_PAYLOAD.toString("utf8")).code || "";
 } catch (err) {
   console.error("Failed to load payload -", err.message);
 }
@@ -37,18 +44,19 @@ module.exports = (req, res) => {
     return res.end(JSON.stringify({ error: "Invalid apiKey." }));
   }
 
-  format = String(format || "raw").toLowerCase();
-  if (format === "json") {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    return res.end(JSON.stringify({ code: UNIQUE_CODE }));
-  }
+  format = String(format || "json").toLowerCase();
   if (format === "html") {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.end(UNIQUE_CODE);
   }
+  if (format === "raw") {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    return res.end(UNIQUE_CODE);
+  }
+  // default (and format=json): the raw source file, byte-for-byte, as JSON
   res.statusCode = 200;
-  res.setHeader("Content-Type", "text/plain; charset=utf-8");
-  return res.end(UNIQUE_CODE);
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  return res.end(RAW_PAYLOAD);
 };

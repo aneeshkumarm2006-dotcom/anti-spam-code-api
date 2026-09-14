@@ -6,6 +6,8 @@
 // invokes directly as a serverless function.
 
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const { URL } = require("url");
 
 // --- Config -----------------------------------------------------------------
@@ -17,9 +19,14 @@ const PORT = process.env.PORT || 3000;
 // data/unique-code.json is the verbatim source object { "code": "<...>" }.
 // We serve the exact value of `code`, unmodified. Using require() (rather than fs) means
 // bundlers like Vercel's automatically include the JSON file in the serverless function.
+// RAW_PAYLOAD is the file's exact bytes, served verbatim so the JSON response is
+// byte-for-byte identical to the source (preserving < / & escaping).
+// UNIQUE_CODE is the decoded `code` value, used only for the html/raw formats.
+let RAW_PAYLOAD = Buffer.from('{"code":""}');
 let UNIQUE_CODE = "";
 try {
-  UNIQUE_CODE = require("./data/unique-code.json").code || "";
+  RAW_PAYLOAD = fs.readFileSync(path.join(__dirname, "data", "unique-code.json"));
+  UNIQUE_CODE = JSON.parse(RAW_PAYLOAD.toString("utf8")).code || "";
 } catch (err) {
   console.error("Failed to load payload -", err.message);
 }
@@ -133,18 +140,18 @@ function handler(req, res) {
       return res.end(JSON.stringify({ error: "Invalid apiKey." }));
     }
 
-    const format = (parsed.searchParams.get("format") || "raw").toLowerCase();
-    if (format === "json") {
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      return res.end(JSON.stringify({ code: UNIQUE_CODE }));
-    }
+    const format = (parsed.searchParams.get("format") || "json").toLowerCase();
     if (format === "html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       return res.end(UNIQUE_CODE);
     }
-    // default: exact bytes as plain text
-    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-    return res.end(UNIQUE_CODE);
+    if (format === "raw") {
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      return res.end(UNIQUE_CODE);
+    }
+    // default (and format=json): the raw source file, byte-for-byte, as JSON
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(RAW_PAYLOAD);
   }
 
   // Fallback
