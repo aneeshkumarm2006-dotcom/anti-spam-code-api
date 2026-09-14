@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: unique-code-api
+    runtime: node
+    plan: free
+    buildCommand: echo "no build step"
+    startCommand: node index.js
+    envVars:
+      - key: API_KEY
+        sync: false

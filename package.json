@@ -1,0 +1,12 @@
+{
+  "name": "unique-code-api",
+  "version": "1.0.0",
+  "description": "Minimal API-key-gated endpoint that returns the exact unique-code payload.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
