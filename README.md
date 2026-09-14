@@ -57,13 +57,16 @@ No `npm install` needed — there are no dependencies.
 > **Root Directory** to that folder during import.
 
 1. Push to GitHub, then Vercel → **Add New → Project** → import the repo (no build settings needed).
-2. `vercel.json` routes every request to `api/index.js`, which re-exports the same handler.
-3. (Optional) Add an `API_KEY` environment variable.
+2. Vercel serves `public/index.html` at `/` (the interface) and the `api/unique-code.js`
+   function at `/unique-code` automatically — no `vercel.json` or rewrites required.
+3. (Optional) Add an `API_KEY` environment variable. If you set a custom key, also update the
+   `API_KEY` constant in `public/index.html` so the displayed link stays valid.
 4. Deploy. Your link: `https://<your-project>.vercel.app/unique-code?apiKey=<KEY>`
 
 ## Files
 
-- `index.js` — the whole server (Node built-ins only).
-- `api/index.js` — Vercel entry; re-exports the handler.
+- `index.js` — standalone Node server for Render / Railway / a VM / local (`node index.js`).
+- `public/index.html` — the interface, served at `/` on Vercel.
+- `api/unique-code.js` — Vercel serverless function, served at `/unique-code`.
 - `data/unique-code.json` — the verbatim source `{ "code": "..." }`; served unmodified.
-- `vercel.json` / `render.yaml` — deploy config.
+- `render.yaml` — Render deploy config.
